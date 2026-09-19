@@ -22,7 +22,7 @@ Try the deployed application directly:
 
 **[Open Berlin Bureaucracy RAG](https://berlin-bureaucracy-rag-1.onrender.com)**
 
-![Web interface](docs/interface.png)
+![Web interface](Docs/interface.png)
 
 ---
 
