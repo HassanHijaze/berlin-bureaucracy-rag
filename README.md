@@ -37,7 +37,7 @@ the underlying source material.
 | Wrong | 2 |
 | Partial | 1 |
 | Stale source | 1 |
-| Declined | 20 |
+| Correctly Declined | 20 |
 
 The stale-source case is reported separately from model errors. The generated
 answer accurately reflected the retrieved document, but the document itself
