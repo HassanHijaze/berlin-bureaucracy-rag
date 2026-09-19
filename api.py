@@ -362,542 +362,206 @@ def home():
 
 PAGE = """<!doctype html>
 <html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Berlin registration and residence questions</title>
-
+<title>Berlin Bureaucracy RAG</title>
 <style>
-:root {
-  --ink:   #16161a;
-  --body:  #3d3d42;
-  --muted: #8a8a90;
-  --line:  #e8e8ea;
-  --bg:    #fbfbfc;
-  --accent:#1a4d8f;
+:root{
+  --bg:#f6f8fb;--panel:#fff;--ink:#12213a;--body:#445169;--muted:#7b8798;
+  --line:#e1e7ef;--accent:#1f63d7;--accent-dark:#174fae;--good:#1d7a50;
+  --good-soft:#edf8f2;--danger:#a13c3c;--danger-soft:#fff2f2;
+  --shadow:0 18px 45px rgba(26,45,77,.10)
 }
-
-* {
-  box-sizing: border-box;
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+  color:var(--body);
+  background:radial-gradient(circle at 8% 0%,#eaf2ff 0,transparent 30%),
+             radial-gradient(circle at 92% 8%,#eef9ff 0,transparent 28%),var(--bg);
+  -webkit-font-smoothing:antialiased
 }
-
-body {
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    system-ui,
-    sans-serif;
-
-  background: var(--bg);
-  color: var(--body);
-
-  max-width: 680px;
-  margin: 0 auto;
-
-  padding: 64px 24px 96px;
-
-  line-height: 1.65;
-  font-size: 16px;
-
-  -webkit-font-smoothing: antialiased;
-}
-
-h1 {
-  font-size: 24px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  margin: 0 0 10px;
-}
-
-.lede {
-  font-size: 14.5px;
-  color: var(--muted);
-  margin: 0 0 6px;
-}
-
-.disclaimer {
-  font-size: 13px;
-  color: var(--muted);
-  margin: 0 0 32px;
-  padding-left: 12px;
-  border-left: 2px solid var(--line);
-}
-
-.disclaimer b {
-  color: var(--body);
-  font-weight: 600;
-}
-
-form {
-  display: flex;
-  gap: 10px;
-  align-items: stretch;
-}
-
-input {
-  flex: 1;
-  padding: 13px 16px;
-  font-size: 16px;
-  font-family: inherit;
-  color: var(--ink);
-  background: #fff;
-  border: 1px solid #d8d8dc;
-  border-radius: 10px;
-  transition:
-    border-color .15s,
-    box-shadow .15s;
-}
-
-input::placeholder {
-  color: #b4b4ba;
-}
-
-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow:
-    0 0 0 3px rgba(26,77,143,.10);
-}
-
-button {
-  padding: 0 22px;
-  font-size: 15px;
-  font-weight: 550;
-  font-family: inherit;
-  color: #fff;
-  background: var(--ink);
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background .15s;
-}
-
-button:hover:not(:disabled) {
-  background: #000;
-}
-
-button:disabled {
-  background: #c4c4c8;
-  cursor: default;
-}
-
-.examples {
-  margin-top: 14px;
-  font-size: 13.5px;
-  color: var(--muted);
-}
-
-.examples button {
-  all: unset;
-  cursor: pointer;
-  color: var(--accent);
-  border-bottom:
-    1px solid rgba(26,77,143,.25);
-  padding-bottom: 1px;
-}
-
-.examples button:hover {
-  border-bottom-color: var(--accent);
-}
-
-.examples .sep {
-  margin: 0 8px;
-  color: #d0d0d4;
-}
-
-#out {
-  margin-top: 40px;
-}
-
-#out:empty {
-  display: none;
-}
-
-.card {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 24px 26px;
-  box-shadow:
-    0 1px 2px rgba(0,0,0,.03);
-}
-
-.answer {
-  color: var(--body);
-}
-
-.answer p {
-  margin: 0 0 14px;
-}
-
-.answer p:last-child {
-  margin-bottom: 0;
-}
-
-.answer b,
-.answer strong {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.answer ul {
-  margin: 0 0 14px;
-  padding-left: 22px;
-}
-
-.answer li {
-  margin-bottom: 7px;
-}
-
-.answer li:last-child {
-  margin-bottom: 0;
-}
-
-.refused {
-  color: var(--muted);
-  font-style: italic;
-}
-
-.sources {
-  margin-top: 22px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.sources .label {
-  display: block;
-  font-size: 11px;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-  color: #a8a8ae;
-  margin-bottom: 8px;
-}
-
-.sources ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.sources li {
-  background: #f4f4f6;
-  border-radius: 6px;
-  padding: 3px 9px;
-  font-size: 12.5px;
-  color: var(--body);
-}
-
-.timing {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #c0c0c6;
-}
-
-.thinking {
-  color: var(--muted);
-  font-size: 14.5px;
-}
-
-.thinking::after {
-  content: '';
-  display: inline-block;
-  width: 1em;
-  text-align: left;
-  animation:
-    dots 1.2s steps(4, end) infinite;
-}
-
-@keyframes dots {
-  0%   { content: ''; }
-  25%  { content: '.'; }
-  50%  { content: '..'; }
-  75%  { content: '...'; }
-}
-
-.error {
-  background: #fdf3f3;
-  border: 1px solid #f2d5d5;
-  border-radius: 10px;
-  padding: 14px 18px;
-  color: #9b3b3b;
-  font-size: 14.5px;
-}
-
-@media (max-width: 560px) {
-  body {
-    padding: 40px 18px 64px;
-  }
-
-  form {
-    flex-direction: column;
-  }
-
-  button {
-    padding: 13px;
-  }
-}
+.shell{width:min(980px,calc(100% - 32px));margin:0 auto;padding:28px 0 58px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:48px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;color:#fff;background:linear-gradient(135deg,#1f63d7,#3c8cff);box-shadow:0 9px 24px rgba(31,99,215,.25);font-weight:800}
+.brand-title{color:var(--ink);font-size:14px;font-weight:800}
+.brand-subtitle{margin-top:3px;color:var(--muted);font-size:11.5px}
+.github-link{padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.76);color:var(--body);text-decoration:none;font-size:13px;font-weight:700;transition:.18s ease}
+.github-link:hover{transform:translateY(-1px);background:#fff;color:var(--ink)}
+.hero{max-width:790px;margin:0 auto;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;margin-bottom:17px;border-radius:999px;background:var(--good-soft);color:var(--good);font-size:12px;font-weight:800}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:var(--good)}
+h1{margin:0;color:var(--ink);font-size:clamp(34px,6vw,54px);line-height:1.04;letter-spacing:-.038em;font-weight:850}
+.hero p{max-width:700px;margin:17px auto 0;color:var(--muted);font-size:16px;line-height:1.7}
+.search-card{max-width:840px;margin:30px auto 0;padding:18px;border:1px solid rgba(214,223,235,.95);border-radius:20px;background:rgba(255,255,255,.91);box-shadow:var(--shadow);backdrop-filter:blur(12px)}
+form{display:flex;gap:10px}
+input{min-width:0;flex:1;height:56px;padding:0 17px;border:1px solid #d6dee9;border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:15.5px;transition:border-color .15s,box-shadow .15s}
+input::placeholder{color:#a4aebb}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px rgba(31,99,215,.10)}
+#btn{height:56px;padding:0 25px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--accent),#347ce8);color:#fff;font:inherit;font-size:14.5px;font-weight:800;cursor:pointer;box-shadow:0 8px 18px rgba(31,99,215,.20);transition:.18s ease}
+#btn:hover:not(:disabled){transform:translateY(-1px);background:linear-gradient(135deg,var(--accent-dark),var(--accent))}
+#btn:disabled{opacity:.55;cursor:default;box-shadow:none}
+.examples-label{margin:16px 2px 9px;color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.examples{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.example-btn{appearance:none;min-height:54px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--body);text-align:left;font:inherit;font-size:12.5px;line-height:1.4;cursor:pointer;transition:.16s ease}
+.example-btn:hover{border-color:#b8cae6;background:#f8fbff;color:var(--accent-dark)}
+.meta{max-width:840px;margin:14px auto 0;display:flex;justify-content:center;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+.meta strong{color:var(--body)}
+#out{max-width:840px;margin:27px auto 0}
+#out:empty{display:none}
+.card{padding:26px;border:1px solid var(--line);border-radius:18px;background:var(--panel);box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.card-title{color:var(--ink);font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.08em}
+.status-pill{padding:6px 9px;border-radius:999px;background:var(--good-soft);color:var(--good);font-size:11px;font-weight:800}
+.status-pill.refusal{background:#f1f3f6;color:#6e7683}
+.answer{color:var(--body);font-size:15.5px;line-height:1.75}
+.answer p{margin:0 0 14px}.answer p:last-child{margin-bottom:0}
+.answer b,.answer strong{color:var(--ink);font-weight:750}
+.answer ul{margin:0 0 14px;padding-left:21px}.answer li{margin-bottom:7px}
+.refused{color:#6d7581;font-style:italic}
+.sources{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.sources-label{display:block;margin-bottom:10px;color:var(--muted);font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.08em}
+.source-grid{display:flex;flex-wrap:wrap;gap:8px}
+.source-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #d9e3ef;border-radius:9px;background:#f8fbff;color:#35516f;font-size:12px;font-weight:700}
+.source-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.timing{margin-top:10px;text-align:right;color:#9ca6b5;font-size:11.5px}
+.thinking{padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.84);color:var(--muted);font-size:14px;box-shadow:0 10px 28px rgba(26,45,77,.06)}
+.thinking::after{content:'';display:inline-block;width:1.2em;animation:dots 1.15s steps(4,end) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+.error{padding:16px 18px;border:1px solid #f0cccc;border-radius:12px;background:var(--danger-soft);color:var(--danger);font-size:14px}
+.footer{max-width:840px;margin:30px auto 0;padding-top:18px;border-top:1px solid rgba(214,222,232,.85);color:var(--muted);text-align:center;font-size:11.5px;line-height:1.6}
+@media(max-width:720px){.shell{width:min(100% - 22px,980px);padding-top:18px}.topbar{margin-bottom:34px}.brand-subtitle{display:none}form{flex-direction:column}#btn{width:100%}.examples{grid-template-columns:1fr}.card{padding:20px}}
 </style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">B</div>
+      <div>
+        <div class="brand-title">Berlin Bureaucracy RAG</div>
+        <div class="brand-subtitle">Source-grounded answers for international students</div>
+      </div>
+    </div>
+    <a class="github-link" href="https://github.com/HassanHijaze/berlin-bureaucracy-rag" target="_blank" rel="noopener">GitHub</a>
+  </header>
 
-<h1>Berlin registration and residence questions</h1>
+  <main>
+    <section class="hero">
+      <div class="badge"><span class="badge-dot"></span>Grounded in official sources</div>
+      <h1>Berlin bureaucracy,<br>made easier to navigate.</h1>
+      <p>
+        Ask questions about address registration, student residence permits,
+        student working rights and health insurance. Answers are generated only
+        from the project's curated legal and administrative corpus.
+      </p>
+    </section>
 
-<p class="lede">
-Answers come from the Bundesmeldegesetz, Aufenthaltsgesetz,
-Aufenthaltsverordnung, SGB&nbsp;V, the Berlin LEA guidance and Berlin service
-pages — and nothing else.
-</p>
+    <section class="search-card">
+      <form onsubmit="go(event)">
+        <input id="q" maxlength="500" placeholder="Ask a question about living or studying in Berlin..." autofocus>
+        <button id="btn" type="submit">Ask</button>
+      </form>
 
-<p class="disclaimer">
-<b>Not legal advice.</b>
-The system declines when its sources do not cover a question.
-Check the cited section before acting; annual figures may be out of date.
-</p>
+      <div class="examples-label">Try an example</div>
+      <div class="examples">
+        <button class="example-btn" type="button" onclick="fill(this)">What happens if I register late?</button>
+        <button class="example-btn" type="button" onclick="fill(this)">How many days can I work as a student?</button>
+        <button class="example-btn" type="button" onclick="fill(this)">My permit expires before my appointment</button>
+      </div>
+    </section>
 
-<form onsubmit="go(event)">
-  <input
-    id="q"
-    maxlength="500"
-    placeholder="How long do I have to register my address?"
-    autofocus
-  >
-  <button id="btn" type="submit">
-    Ask
-  </button>
-</form>
+    <div class="meta">
+      <span><strong>Retrieval:</strong> Semantic + BM25</span>
+      <span><strong>Top-K:</strong> 12</span>
+      <span><strong>Scope:</strong> Berlin / international students</span>
+    </div>
 
-<div class="examples">
+    <div id="out"></div>
 
-  <button
-    type="button"
-    onclick="fill(this)"
-  >
-    What happens if I register late?
-  </button>
-
-  <span class="sep">·</span>
-
-  <button
-    type="button"
-    onclick="fill(this)"
-  >
-    How many days can I work as a student?
-  </button>
-
-  <span class="sep">·</span>
-
-  <button
-    type="button"
-    onclick="fill(this)"
-  >
-    My permit expires before my appointment
-  </button>
-
+    <footer class="footer">
+      Not legal advice. The system declines questions that are not supported by its sources.
+      Verify important decisions against the cited law or official administrative guidance.
+    </footer>
+  </main>
 </div>
 
-<div id="out"></div>
-
 <script>
-
 const out = document.getElementById('out');
 const btn = document.getElementById('btn');
 const box = document.getElementById('q');
 
+function fill(el){box.value=el.textContent.trim();go();}
 
-function fill(el) {
-  box.value = el.textContent.trim();
-  go();
-}
+async function go(event){
+  if(event){event.preventDefault();}
+  const q=box.value.trim();
+  if(!q){return;}
 
+  btn.disabled=true;
+  btn.textContent='Searching...';
+  out.innerHTML='<div class="thinking">Searching the legal and administrative sources</div>';
 
-async function go(event) {
+  try{
+    const r=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
 
-  if (event) {
-    event.preventDefault();
-  }
-
-  const q = box.value.trim();
-
-  if (!q) {
-    return;
-  }
-
-  btn.disabled = true;
-
-  out.innerHTML =
-    '<div class="thinking">Searching the sources</div>';
-
-  try {
-
-    const r = await fetch(
-      '/ask',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          question: q
-        })
-      }
-    );
-
-    if (!r.ok) {
-
-      const err =
-        await r.json().catch(() => ({}));
-
-      out.innerHTML =
-        '<div class="error">' +
-        esc(
-          err.detail ||
-          ('Request failed (' + r.status + ')')
-        ) +
-        '</div>';
-
-      btn.disabled = false;
+    if(!r.ok){
+      const err=await r.json().catch(()=>({}));
+      out.innerHTML='<div class="error">'+esc(err.detail||('Request failed ('+r.status+')'))+'</div>';
+      btn.disabled=false;
+      btn.textContent='Ask';
       return;
     }
 
-    const d = await r.json();
+    const d=await r.json();
+    let html='<div class="card">';
 
-    let html =
-      '<div class="card">';
+    html+='<div class="card-header">'+
+      '<div class="card-title">Answer</div>'+
+      '<div class="status-pill'+(d.refused?' refusal':'')+'">'+
+      (d.refused?'Not covered':'Source-grounded')+'</div></div>';
 
-    html +=
-      '<div class="answer' +
-      (d.refused ? ' refused' : '') +
-      '">' +
-      format(d.answer) +
-      '</div>';
+    html+='<div class="answer'+(d.refused?' refused':'')+'">'+format(d.answer)+'</div>';
 
-    if (d.sources.length) {
-
-      html +=
-        '<div class="sources">' +
-        '<span class="label">Sources</span>' +
-        '<ul>' +
-
-        d.sources.map(
-          s =>
-            '<li>' +
-            esc(s.label) +
-            '</li>'
-        ).join('') +
-
-        '</ul>' +
-        '</div>';
+    if(d.sources.length){
+      html+='<div class="sources"><span class="sources-label">Sources used</span><div class="source-grid">'+
+        d.sources.map(s=>'<div class="source-chip"><span class="source-dot"></span>'+esc(s.label)+'</div>').join('')+
+        '</div></div>';
     }
 
-    html += '</div>';
-
-    html +=
-      '<div class="timing">' +
-      d.elapsed_seconds +
-      ' seconds' +
-      '</div>';
-
-    out.innerHTML = html;
-
-  } catch (e) {
-
-    out.innerHTML =
-      '<div class="error">' +
-      'Could not reach the service.' +
-      '</div>';
+    html+='</div>';
+    html+='<div class="timing">Answered in '+d.elapsed_seconds+' seconds</div>';
+    out.innerHTML=html;
+  }catch(e){
+    out.innerHTML='<div class="error">Could not reach the service.</div>';
   }
 
-  btn.disabled = false;
+  btn.disabled=false;
+  btn.textContent='Ask';
 }
 
-
-function esc(s) {
-
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-
-/*
-  Minimal markdown:
-  - bold
-  - bullet lists
-  - numbered lists
-  - paragraphs
-*/
-
-function format(text) {
-
-  const blocks =
-    esc(text)
-      .split(/\\n\\s*\\n/);
-
-  return blocks.map(block => {
-
-    const lines =
-      block
-        .split('\\n')
-        .map(l => l.trim())
-        .filter(Boolean);
-
-    const bulleted =
-      lines.length &&
-      lines.every(
-        l =>
-          /^[-*•]\\s+|^\\d+\\.\\s+/.test(l)
-      );
-
-    if (bulleted) {
-
-      return (
-        '<ul>' +
-
-        lines.map(
-          l =>
-            '<li>' +
-            bold(
-              l.replace(
-                /^[-*•]\\s+|^\\d+\\.\\s+/,
-                ''
-              )
-            ) +
-            '</li>'
-        ).join('') +
-
-        '</ul>'
-      );
+function format(text){
+  const blocks=esc(text).split(/\\n\\s*\\n/);
+  return blocks.map(block=>{
+    const lines=block.split('\\n').map(l=>l.trim()).filter(Boolean);
+    const bulleted=lines.length&&lines.every(l=>/^[-*•]\\s+|^\\d+\\.\\s+/.test(l));
+    if(bulleted){
+      return '<ul>'+lines.map(l=>'<li>'+bold(l.replace(/^[-*•]\\s+|^\\d+\\.\\s+/,''))+'</li>').join('')+'</ul>';
     }
-
-    return (
-      '<p>' +
-      bold(lines.join(' ')) +
-      '</p>'
-    );
-
+    return '<p>'+bold(lines.join(' '))+'</p>';
   }).join('');
 }
 
-
-function bold(s) {
-
-  return s
-    .replace(
-      /\\*\\*(.+?)\\*\\*/g,
-      '<b>$1</b>'
-    )
-    .replace(
-      /__(.+?)__/g,
-      '<b>$1</b>'
-    );
+function bold(s){
+  return s.replace(/\\*\\*(.+?)\\*\\*/g,'<b>$1</b>').replace(/__(.+?)__/g,'<b>$1</b>');
 }
-
 </script>
-
+</body>
 </html>
 """
