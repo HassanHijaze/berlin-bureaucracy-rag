@@ -26,6 +26,17 @@ Try the deployed application directly:
 
 ---
 
+## Why This Project?
+
+International students in Berlin often need to navigate fragmented legal and
+administrative information across federal law, Berlin government pages, and
+immigration guidance.
+
+This project explores whether a RAG system can provide useful answers while
+remaining grounded in official sources and refusing questions that the corpus
+cannot support.
+
+
 ## Evaluation
 
 The system was manually evaluated on **100 realistic student questions** against
@@ -88,6 +99,19 @@ used to guide each improvement.
 The main lesson was that improving a RAG system requires more than increasing
 retrieval accuracy: source quality, chunking, legal scope, refusal behaviour, and
 generation constraints all affect the reliability of the final answer.
+
+
+## Engineering Highlights
+
+- Implemented BM25 retrieval from scratch
+- Combined semantic and lexical retrieval using weighted score fusion
+- Added LLM-based German legal query expansion
+- Built source aware chunking for statutes and administrative pages
+- Added explicit refusal and legal-scope checks in the generation prompt
+- Cached document embeddings locally for faster startup
+- Built a FastAPI backend and web interface
+- Added automated tests with pytest
+- Deployed the application on Render
 
 
 ## Corpus
