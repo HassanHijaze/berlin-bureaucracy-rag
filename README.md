@@ -138,9 +138,6 @@ It focuses on four areas:
 - employment rights during study
 - student health insurance
 
-The corpus intentionally prioritizes legal obligations and authoritative
-administrative information over broader practical guidance that may become
-outdated quickly.
 
 ---
 
@@ -168,13 +165,7 @@ User Question
             ├── original question
             └── rewritten German legal keywords
 
-            → BM25 score
-              60% original query
-              40% rewritten query
-
-                     │
-                     ▼
-              Score normalization
+            
                      │
                      ▼
               Weighted fusion
@@ -192,3 +183,240 @@ User Question
           ▼                     ▼
    Grounded answer        Refusal when
    with citations         unsupported
+
+
+
+
+## Tech Stack
+
+| Area | Technology |
+|---|---|
+| Programming language | Python |
+| API framework | FastAPI |
+| LLM | GPT-5.6 |
+| Embeddings | OpenAI `text-embedding-3-small` |
+| Semantic retrieval | Cosine similarity |
+| Lexical retrieval | BM25 |
+| Query expansion | LLM-generated German legal terminology |
+| Testing | pytest |
+| Containerization | Docker |
+| Deployment | Render |
+| Version control | Git / GitHub |
+
+---
+
+## Project Structure
+
+```text
+berlin-bureaucracy-rag/
+│
+├── api.py
+├── rag.py
+├── test_rag.py
+├── pytest.ini
+├── requirements.txt
+├── Dockerfile
+├── .dockerignore
+├── .gitignore
+├── README.md
+│
+├── Docs/
+│   └── interface.png
+│
+└── Documents/
+    ├── bmg_sections/
+    ├── aufenthg_sections/
+    ├── sgb_sections/
+    ├── aufenthv_sections/
+    ├── vab_sections/
+    └── *.md
+```
+
+---
+
+## Quick Start
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/HassanHijaze/berlin-bureaucracy-rag.git
+cd berlin-bureaucracy-rag
+```
+
+---
+
+### 2. Create a Virtual Environment
+
+macOS / Linux:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+Windows:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+---
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 4. Configure the OpenAI API Key
+
+Create a local file named:
+
+```text
+API.env
+```
+
+Add:
+
+```text
+OPENAI_API_KEY=your_api_key_here
+```
+
+---
+
+### 5. Start the Application
+
+```bash
+uvicorn api:app --reload --port 8000
+```
+
+Open the application:
+
+```text
+http://127.0.0.1:8000
+```
+
+FastAPI documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Health endpoint:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+---
+
+## Run with Docker
+
+The application can also be run inside a Docker container.
+
+### Build the Image
+
+```bash
+docker build -t berlin-bureaucracy-rag .
+```
+
+### Run the Container
+
+```bash
+docker run --rm --env-file API.env -p 8080:8000 berlin-bureaucracy-rag
+```
+
+Open:
+
+```text
+http://127.0.0.1:8080
+```
+
+The FastAPI application runs on port `8000` inside the container.
+
+The example above maps it to port `8080` on the host machine:
+
+```text
+Host               Container
+
+8080       →       8000
+```
+
+---
+
+## Testing
+
+The project includes automated tests using pytest.
+
+Run the standard test suite:
+
+```bash
+pytest
+```
+
+The tests cover technical components such as:
+
+- chunking behavior
+- citation parsing
+- API validation
+- FastAPI endpoints
+- RAG helper functions
+- integration between API and RAG components
+
+
+
+
+
+Answer quality is therefore evaluated separately using the 100-question manual
+evaluation benchmark.
+
+
+## Example Questions
+
+Try questions such as:
+
+```text
+How long do I have to register my address after moving to Berlin?
+
+How many days may I work while studying in Germany?
+
+What happens if my residence permit expires before my appointment?
+
+Do international students need German health insurance?
+
+Can the 18-month job-seeking permit be extended?
+
+What documents do I need for Anmeldung?
+```
+
+---
+
+## Limitations
+
+This project intentionally operates within a limited corpus.
+
+It does not attempt to answer every administrative question relevant to living
+in Germany.
+
+Current limitations include:
+
+- topics outside the selected corpus are intentionally refused
+- source information may become outdated
+- generated answers depend on the quality and scope of retrieved documents
+- the system is not a replacement for professional legal advice
+
+
+---
+
+## Disclaimer
+
+This repository is an educational and portfolio project.
+
+The generated responses are based only on the documents available in the
+project corpus.
+
+For important legal or administrative decisions, always verify the information
+against the relevant legislation or official authority.
