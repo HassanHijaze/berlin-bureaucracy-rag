@@ -7,8 +7,6 @@ declines when they do not support an answer.
 
 **[Live demo](https://berlin-bureaucracy-rag-1.onrender.com)** · Not legal advice.
 
-![Web interface](docs/interface)
-
 ## Results
 
 Evaluated on 100 realistic student questions, each answer checked manually against its cited source.
