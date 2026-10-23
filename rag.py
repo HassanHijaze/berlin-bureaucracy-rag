@@ -24,6 +24,17 @@ import numpy as np
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from chunking import (
+    MAX_CHUNK,
+    MIN_CHUNK,
+    chunk_berlin,
+    chunk_legal,
+    merge_small,
+    split_hard,
+)
+from evaluation import run_review
+from prompts import EXPANSION_PROMPT, PROMPT
+
 
 # ================================================================
 # CONFIG
@@ -35,9 +46,6 @@ ENV_FILE = BASE_DIR / "API.env"
 
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = "gpt-5.6"
-
-MAX_CHUNK = 750
-MIN_CHUNK = 150
 
 K = 12
 MAX_PER_SOURCE = 2
@@ -56,17 +64,6 @@ LEGAL_DIRECTORIES = [
     "sgb_sections",
     "aufenthv_sections",
     "vab_sections",
-]
-
-BERLIN_HEADINGS = [
-    "Verfahrensablauf",
-    "Voraussetzungen",
-    "Erforderliche Unterlagen",
-    "Formulare",
-    "Gebühren",
-    "Rechtsgrundlagen",
-    "Durchschnittliche Bearbeitungszeit",
-    "Weiterführende Informationen",
 ]
 
 
@@ -92,105 +89,6 @@ def get_client():
         _client = OpenAI(api_key=api_key)
 
     return _client
-
-
-# ================================================================
-# CHUNKING
-# ================================================================
-
-def split_hard(text, max_size=MAX_CHUNK, overlap=100):
-    """Split text into fixed-size pieces that overlap by `overlap` characters."""
-    if len(text) <= max_size:
-        return [text]
-
-    pieces = []
-    step = max_size - overlap
-    start = 0
-
-    while start < len(text):
-        pieces.append(text[start:start + max_size])
-        start += step
-
-    return pieces
-
-
-def chunk_legal(text, max_size=MAX_CHUNK):
-    """Split a statute at paragraph markers like (1), (2), keeping the header."""
-    if len(text) <= max_size:
-        return [text]
-
-    lines = text.split("\n")
-    header = lines[0] if lines else ""
-
-    pieces = []
-    current = ""
-
-    for part in re.split(r"\n(?=\(\d+\))", text):
-        if current and len(current) + len(part) > max_size:
-            pieces.append(f"[{header}]\n{current}" if pieces else current)
-            current = part
-        else:
-            current += ("\n" if current else "") + part
-
-    if current:
-        pieces.append(f"[{header}]\n{current}" if pieces else current)
-
-    final_pieces = []
-    for piece in pieces:
-        if len(piece) <= max_size:
-            final_pieces.append(piece)
-        else:
-            final_pieces.extend(split_hard(piece, max_size=max_size))
-
-    return final_pieces
-
-
-def chunk_berlin(text, max_size=MAX_CHUNK):
-    """Split a Berlin administrative page at its standard section headings."""
-    pattern = "|".join(re.escape(heading) for heading in BERLIN_HEADINGS)
-
-    parts = [
-        part.strip()
-        for part in re.split(rf"\n(?={pattern})", text)
-        if part.strip()
-    ]
-    if not parts:
-        parts = [text]
-
-    output = []
-    for part in parts:
-        if len(part) <= max_size:
-            output.append(part)
-        else:
-            output.extend(split_hard(part, max_size=max_size))
-
-    return output
-
-
-def merge_small(chunks, min_size=MIN_CHUNK):
-    """Merge tiny chunks into the previous chunk from the same source."""
-    output = []
-
-    for chunk in chunks:
-        can_merge = (
-            output
-            and len(chunk["text"]) < min_size
-            and output[-1]["source"] == chunk["source"]
-            and len(output[-1]["text"]) + 1 + len(chunk["text"]) <= MAX_CHUNK
-        )
-        if can_merge:
-            output[-1]["text"] += "\n" + chunk["text"]
-        else:
-            output.append(dict(chunk))
-
-    # Renumber chunk indices per source after merging.
-    counts = {}
-    for chunk in output:
-        index = counts.get(chunk["source"], 0)
-        chunk["index"] = index
-        counts[chunk["source"]] = index + 1
-
-    return output
 
 
 # ================================================================
@@ -344,168 +242,6 @@ def cached_vectors(chunks):
     vectors = embed_batch([chunk["text"] for chunk in chunks])
     np.save(path, vectors)
     return vectors
-
-
-# ================================================================
-# PROMPTS
-# ================================================================
-
-EXPANSION_PROMPT = (
-    "Map the following user question to German administrative and legal "
-    "search keywords.\n\n"
-    "Include relevant German legal terms, statutory sections, and "
-    "administrative terminology when appropriate.\n\n"
-    "Examples:\n"
-    "- cost/fee -> Gebühren kostenfrei\n"
-    "- lost paper/proof -> Meldebescheinigung Meldebestätigung\n"
-    "- fine/penalty -> Ordnungswidrigkeit Bußgeld § 54\n"
-    "- hotel/hostel -> Beherbergungsstätte § 29\n"
-    "- move/change address -> Anmeldung Ummeldung § 17 § 21\n\n"
-    "Question: {question}\n\n"
-    "Output ONLY space-separated German keywords."
-)
-
-PROMPT = """
-YOU MUST WRITE YOUR ANSWER IN THE QUESTIONS LANGUAGE.
-
-You are an expert administrative and regulatory intelligence assistant.
-
-Answer the user's question accurately and clearly based ONLY on the
-provided SOURCES.
-
-IMPORTANT:
-
-1. SOURCE-BASED ANSWERING
-
-Use only information supported by the provided SOURCES.
-
-Do not introduce outside legal knowledge.
-
-Do not invent missing facts.
-
-Do not guess.
-
-
-2. METADATA AND STRUCTURED DATA
-
-Treat all information in the context as factual evidence, including:
-
-- document metadata
-- headings
-- key-value fields
-- lists
-- tables
-- costs
-- fees
-- conditions
-- legal provisions
-
-
-3. SEMANTIC BRIDGING
-
-Users may use everyday language rather than legal terminology.
-
-Map concepts when the underlying administrative/legal category is clearly
-present in the sources.
-
-Examples:
-
-hotel / hostel
--> accommodation / lodging establishment
-
-paperwork
--> required documents
-
-lost proof
--> certificate / confirmation
-
-move / change address
--> Anmeldung / Ummeldung
-
-
-4. LEGAL MODALITY
-
-Preserve the distinction between:
-
-- must / shall
-- may
-- can
-- cannot
-- prohibited
-- conditional requirements
-
-Do not turn a discretionary rule into a mandatory rule.
-
-Do not turn a conditional rule into an unconditional rule.
-
-
-5. REFUSAL
-
-Output EXACTLY:
-
-The sources I have do not cover this.
-
-ONLY when the core policy, legal rule, requirement, or numerical figure
-needed to answer the question is absent from the provided SOURCES.
-
-Do not refuse simply because the user's wording differs from the source.
-
-
-6. WHOSE SITUATION IS THIS?
-
-Before using a rule, identify who or what the rule is written about, and
-check that the person asking falls inside that group.
-
-Ask yourself, for each rule you are about to apply:
-
-- Who does this rule govern? A rule about people already registered in
-  Germany does not govern someone arriving from abroad. A rule about
-  online registration does not govern an in-person appointment. A rule
-  about family members insured through a relative does not govern a
-  student insured in their own right.
-
-- What question does this text answer? A source explaining WHO may issue
-  a document does not answer WHETHER a particular person qualifies. A
-  source explaining WHAT a permit is for does not answer WHETHER a change
-  of course requires a new one.
-
-If the source is about the right topic but does not address the situation
-in the question, say so:
-
-"The sources state [the rule]. They do not address [the specific
-situation you asked about]."
-
-That is a complete and useful answer. Do not close the gap yourself.
-
-
-7. CITATIONS
-
-Every factual claim must cite the exact source filename.
-
-Example:
-
-International students may work up to 140 full working days per year
-[aufenthg_en_16b.txt].
-
-
-8. ANSWER STYLE
-
-Give a direct answer first.
-
-Then provide a short explanation if needed.
-
-Do not add unsupported advice.
-
-SOURCES:
-
-{context}
-
-QUESTION:
-
-{question}
-
-IN THE QUESTIONS LANGUAGE.
-"""
 
 
 # ================================================================
@@ -672,127 +408,6 @@ class System:
         )
 
         return response.choices[0].message.content, hits
-
-
-# ================================================================
-# EVALUATION
-# ================================================================
-
-def parse_question(question, number):
-    """Read one evaluation entry, which may be a dict or a plain string."""
-    if isinstance(question, dict):
-        return {
-            "id": question.get("id", f"Q{number}"),
-            "text": question.get("question", ""),
-            "sources": question.get("source_files", []),
-            "coverage": question.get("coverage", "-"),
-            "expected": question.get("expected"),
-        }
-
-    return {
-        "id": f"Q{number}",
-        "text": str(question),
-        "sources": [],
-        "coverage": "-",
-        "expected": None,
-    }
-
-
-def print_result(number, total, entry, answer, hits, refused, found):
-    """Print the answer and retrieved chunks for one evaluation question."""
-    print("=" * 80)
-    print(f"[{number}/{total}] {entry['id']}   coverage: {entry['coverage']}")
-    print(f"Q: {entry['text']}")
-    print("-" * 80)
-    print(answer.strip())
-    print("-" * 80)
-
-    if entry["expected"]:
-        print(f"EXPECTED: {entry['expected']}")
-
-    print("RETRIEVED TOP-12:")
-    for rank, (chunk, final, semantic, bm25) in enumerate(hits, 1):
-        print(
-            f"  {rank:2d}. final={final:.4f} semantic={semantic:.4f} "
-            f"bm25={bm25:.4f} | {chunk['source']} (chunk {chunk['index']})"
-        )
-
-    if entry["sources"]:
-        print(
-            f"CORRECT SOURCE FOUND: {'yes' if found else 'NO'} "
-            f"(wanted: {', '.join(entry['sources'])})"
-        )
-
-    if refused:
-        print("FLAGS: REFUSED")
-
-    print()
-
-
-def print_summary(results):
-    """Print retrieval and refusal rates for the evaluation run."""
-    should_answer = [r for r in results if r["coverage"] != "none"]
-    should_refuse = [r for r in results if r["coverage"] == "none"]
-
-    print("=" * 80)
-    print("SUMMARY EVALUATION")
-    print("=" * 80)
-    print("Retrieval:")
-
-    if should_answer:
-        total = len(should_answer)
-        retrieved = sum(r["retrieved_correct"] for r in should_answer)
-        answered = sum(not r["refused"] for r in should_answer)
-        print(f"  right source retrieved: {retrieved}/{total} ({100 * retrieved / total:.1f}%)")
-        print(f"  produced an answer: {answered}/{total} ({100 * answered / total:.1f}%)")
-
-    if should_refuse:
-        total = len(should_refuse)
-        refused = sum(r["refused"] for r in should_refuse)
-        print(f"  correctly refused: {refused}/{total} ({100 * refused / total:.1f}%)")
-
-    print()
-    print("NOTE:")
-    print(
-        "This evaluation measures retrieval and refusal behavior. "
-        "It does NOT automatically determine whether an answer is legally correct."
-    )
-
-
-def run_review(system, questions, ids=None):
-    """Run evaluation questions, print each result, and return a summary list."""
-    if isinstance(questions, dict):
-        questions = questions.get("questions", [])
-
-    if ids:
-        questions = [
-            q for q in questions if isinstance(q, dict) and q.get("id") in ids
-        ]
-
-    results = []
-
-    for number, question in enumerate(questions, 1):
-        entry = parse_question(question, number)
-        answer, hits = system.ask(entry["text"])
-
-        refused = "do not cover" in answer.lower()
-        retrieved_sources = [chunk["source"] for chunk, _, _, _ in hits]
-        found = any(source in entry["sources"] for source in retrieved_sources)
-
-        print_result(number, len(questions), entry, answer, hits, refused, found)
-
-        results.append(
-            {
-                "id": entry["id"],
-                "coverage": entry["coverage"],
-                "refused": refused,
-                "retrieved_correct": found,
-                "answer": answer.strip(),
-            }
-        )
-
-    print_summary(results)
-    return results
 
 
 # ================================================================
