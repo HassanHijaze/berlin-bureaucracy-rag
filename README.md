@@ -23,15 +23,18 @@ With 100 questions, the margin of error is roughly ±9 points.
 ## How it works
 
 ```text
-question → semantic search + BM25 (with German legal query rewrite)
-         → weighted fusion (70 / 30) → top 12 chunks
+question → semantic search + BM25 → weighted fusion (70 / 30) → top 12 chunks
          → GPT-5.6 generation with citations, or refusal
 ```
 
+
 ## Limitations
 
+- The system covers a limited corpus and does not attempt to answer every administrative question relevant to living in Germany.
+- Topics outside it are intentionally refused.
+- Source information may become outdated, so annual amounts and thresholds require regular corpus updates.
 - Answers can differ between English and German phrasings of the same question.
-- Annual amounts and thresholds require regular corpus updates.
+
 
 ## Quick start
 
