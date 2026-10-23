@@ -1,422 +1,50 @@
 # Berlin Bureaucracy RAG
 
-A Retrieval-Augmented Generation (RAG) system for answering questions about
-German registration, residence law, student employment rights, and health
-insurance for international students in Berlin.
+A retrieval-augmented question-answering system for international students in Berlin.
+It answers questions on registration, residence permits, working rights, and health
+insurance from German statutes and official Berlin sources, cites its sources, and
+declines when they do not support an answer.
 
-The system retrieves information from German statutes and official Berlin
-administrative sources, combines semantic search with BM25 retrieval, and
-generates source-grounded answers with citations.
+**[Live demo](https://berlin-bureaucracy-rag-1.onrender.com)** · Not legal advice.
 
-If the available sources do not support an answer, the system is instructed to
-decline rather than provide unsupported information.
+![Web interface](docs/interface.png)
 
-> **Disclaimer:** This project is for informational and evaluation purposes only
-> and does not constitute legal advice.
+## Results
 
----
+Evaluated on 100 realistic student questions, each answer checked manually against its cited source.
 
-## Live Demo
+| Correct | Correctly declined | Wrong | Partial | Stale source |
+|:---:|:---:|:---:|:---:|:---:|
+| 76 | 20 | 2 | 1 | 1 |
 
-Try the deployed application directly:
+Out-of-scope questions are included on purpose to measure refusal behaviour.
+With 100 questions, the margin of error is roughly ±9 points.
 
-**[Open Berlin Bureaucracy RAG](https://berlin-bureaucracy-rag-1.onrender.com)**
-
-![Web interface](Docs/interface.png)
-
----
-
-## Why This Project?
-
-International students in Berlin often need to navigate fragmented legal and
-administrative information across federal law, Berlin government pages, and
-immigration guidance.
-
-This project explores whether a RAG system can provide useful answers while
-remaining grounded in official sources and refusing questions that the corpus
-cannot support.
-
-
-## Evaluation
-
-The system was manually evaluated on **100 realistic student questions** against
-the underlying source material.
-
-| Result | Count |
-|---|---:|
-| Correct | 76 |
-| Wrong | 2 |
-| Partial | 1 |
-| Stale source | 1 |
-| Correctly Declined | 20 |
-
-The stale-source case is reported separately from model errors. The generated
-answer accurately reflected the retrieved document, but the document itself
-contained an outdated annual value. This is therefore treated as a corpus
-freshness issue rather than a retrieval or generation failure.
-
-The declined questions are largely intentional. Topics such as tax
-identification numbers, bank accounts, the Rundfunkbeitrag, and pension
-contributions are deliberately outside the corpus.
-
-Including unsupported questions makes refusal behavior measurable: the system
-should decline when the required information is missing rather than generate an
-unsupported answer.
-
-Correctness is not scored automatically. Every generated answer was manually
-checked against the source text it cited.
-
----
-
-## Development & Lessons Learned
-
-The project was developed iteratively, with retrieval and generation failures
-used to guide each improvement.
-
-- **From semantic search to hybrid retrieval:** semantic similarity alone did not
-  consistently capture exact German legal terminology, so BM25 was added and
-  combined with semantic retrieval.
-
-- **German legal query expansion:** English and everyday-language questions often
-  differed from the terminology used in statutes and administrative documents.
-  An LLM-based German query rewrite was therefore added to improve lexical
-  retrieval.
-
-- **Source-aware chunking:** generic text splitting was replaced with different
-  strategies for statutory provisions and Berlin administrative pages to preserve
-  meaningful legal and procedural context.
-
-- **Stricter grounding and refusal:** testing showed that retrieving a relevant
-  source does not guarantee a correct answer. The generation prompt was refined
-  to check legal categories, preserve distinctions such as `must` and `may`, and
-  refuse when the required rule is not supported by the retrieved sources.
-
-- **Failure analysis shaped the evaluation:** errors were separated into retrieval
-  failures, generation errors, unsupported questions, and stale-source problems.
-  This made it possible to distinguish model failures from limitations of the
-  underlying corpus.
-
-The main lesson was that improving a RAG system requires more than increasing
-retrieval accuracy: source quality, chunking, legal scope, refusal behaviour, and
-generation constraints all affect the reliability of the final answer.
-
-
-## Engineering Highlights
-
-- Implemented BM25 retrieval from scratch
-- Combined semantic and lexical retrieval using weighted score fusion
-- Added LLM-based German legal query expansion
-- Built source aware chunking for statutes and administrative pages
-- Added explicit refusal and legal-scope checks in the generation prompt
-- Cached document embeddings locally for faster startup
-- Built a FastAPI backend and web interface
-- Added automated tests with pytest
-- Deployed the application on Render
-
-
-## Corpus
-
-The corpus contains German legislation and official administrative information
-relevant to international students in Berlin.
-
-| Folder | Content |
-|---|---|
-| `bmg_sections/` | Bundesmeldegesetz, 13 sections in German and English |
-| `aufenthg_sections/` | Aufenthaltsgesetz, 6 sections in German and English |
-| `sgb_sections/` | SGB V, 7 sections covering student health insurance |
-| `aufenthv_sections/` | Aufenthaltsverordnung, 6 sections covering visa procedures and fees |
-| `vab_sections/` | Berlin LEA administrative guidance |
-| `*.md` | Berlin Service Portal, LEA, health authority, and insurer sources |
-
-The corpus currently contains **68 documents** and approximately **614 chunks**
-of up to roughly 750 characters.
-
-It focuses on four areas:
-
-- address registration
-- student residence permits
-- employment rights during study
-- student health insurance
-
-
----
-
-## Architecture
-
-
-The system uses a hybrid retrieval pipeline that combines semantic similarity
-with BM25 keyword search. This helps capture both the meaning of natural-language
-questions and the exact German legal terminology used in the source documents.
-
-Retrieved results are then passed to GPT-5.6 for source-grounded generation,
-with explicit instructions to cite the evidence used and refuse unsupported
-questions.
+## How it works
 
 ```text
-User Question
-     │
-     ├── Semantic embedding
-     │      text-embedding-3-small
-     │
-     │      → semantic similarity score
-     │
-     └── German legal query expansion
-            │
-            ├── original question
-            └── rewritten German legal keywords
-
-            
-                     │
-                     ▼
-              Weighted fusion
-             70% semantic
-             30% BM25
-                     │
-                     ▼
-              Top 12 chunks
-          max. 2 chunks per source
-                     │
-                     ▼
-                Generation
-                     │
-          ┌──────────┴──────────┐
-          ▼                     ▼
-   Grounded answer        Refusal when
-   with citations         unsupported
-
-
-
-
-## Tech Stack
-
-| Area | Technology |
-|---|---|
-| Programming language | Python |
-| API framework | FastAPI |
-| LLM | GPT-5.6 |
-| Embeddings | OpenAI `text-embedding-3-small` |
-| Semantic retrieval | Cosine similarity |
-| Lexical retrieval | BM25 |
-| Query expansion | LLM-generated German legal terminology |
-| Testing | pytest |
-| Containerization | Docker |
-| Deployment | Render |
-| Version control | Git / GitHub |
-
----
-
-## Project Structure
-
-```text
-berlin-bureaucracy-rag/
-│
-├── api.py
-├── rag.py
-├── test_rag.py
-├── pytest.ini
-├── requirements.txt
-├── Dockerfile
-├── .dockerignore
-├── .gitignore
-├── README.md
-│
-├── Docs/
-│   └── interface.png
-│
-└── Documents/
-    ├── bmg_sections/
-    ├── aufenthg_sections/
-    ├── sgb_sections/
-    ├── aufenthv_sections/
-    ├── vab_sections/
-    └── *.md
+question → semantic search + BM25 (with German legal query rewrite)
+         → weighted fusion (70 / 30) → top 12 chunks
+         → GPT-5.6 generation with citations, or refusal
 ```
 
----
+## Limitations
 
-## Quick Start
+- Answers can differ between English and German phrasings of the same question.
+- Annual amounts and thresholds require regular corpus updates.
 
-### 1. Clone the Repository
+## Quick start
 
 ```bash
 git clone https://github.com/HassanHijaze/berlin-bureaucracy-rag.git
 cd berlin-bureaucracy-rag
-```
-
----
-
-### 2. Create a Virtual Environment
-
-macOS / Linux:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
-
-Windows:
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-```
-
----
-
-### 3. Install Dependencies
-
-```bash
 pip install -r requirements.txt
+echo OPENAI_API_KEY=your_key > API.env
+uvicorn api:app --port 8000
 ```
 
----
+Run tests with `pytest` (offline) or `pytest -m live` (calls the API).
 
-### 4. Configure the OpenAI API Key
+## Tech stack
 
-Create a local file named:
-
-```text
-API.env
-```
-
-Add:
-
-```text
-OPENAI_API_KEY=your_api_key_here
-```
-
----
-
-### 5. Start the Application
-
-```bash
-uvicorn api:app --reload --port 8000
-```
-
-Open the application:
-
-```text
-http://127.0.0.1:8000
-```
-
-FastAPI documentation:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-Health endpoint:
-
-```text
-http://127.0.0.1:8000/health
-```
-
----
-
-## Run with Docker
-
-The application can also be run inside a Docker container.
-
-### Build the Image
-
-```bash
-docker build -t berlin-bureaucracy-rag .
-```
-
-### Run the Container
-
-```bash
-docker run --rm --env-file API.env -p 8080:8000 berlin-bureaucracy-rag
-```
-
-Open:
-
-```text
-http://127.0.0.1:8080
-```
-
-The FastAPI application runs on port `8000` inside the container.
-
-The example above maps it to port `8080` on the host machine:
-
-```text
-Host               Container
-
-8080       →       8000
-```
-
----
-
-## Testing
-
-The project includes automated tests using pytest.
-
-Run the standard test suite:
-
-```bash
-pytest
-```
-
-The tests cover technical components such as:
-
-- chunking behavior
-- citation parsing
-- API validation
-- FastAPI endpoints
-- RAG helper functions
-- integration between API and RAG components
-
-
-
-
-
-Answer quality is therefore evaluated separately using the 100-question manual
-evaluation benchmark.
-
-
-## Example Questions
-
-Try questions such as:
-
-```text
-How long do I have to register my address after moving to Berlin?
-
-How many days may I work while studying in Germany?
-
-What happens if my residence permit expires before my appointment?
-
-Do international students need German health insurance?
-
-Can the 18-month job-seeking permit be extended?
-
-What documents do I need for Anmeldung?
-```
-
----
-
-## Limitations
-
-This project intentionally operates within a limited corpus.
-
-It does not attempt to answer every administrative question relevant to living
-in Germany.
-
-Current limitations include:
-
-- topics outside the selected corpus are intentionally refused
-- source information may become outdated
-- generated answers depend on the quality and scope of retrieved documents
-- the system is not a replacement for professional legal advice
-
-
----
-
-## Disclaimer
-
-This repository is an educational and portfolio project.
-
-The generated responses are based only on the documents available in the
-project corpus.
-
-For important legal or administrative decisions, always verify the information
-against the relevant legislation or official authority.
+Python · FastAPI · OpenAI · BM25 · pytest · Docker · Render
