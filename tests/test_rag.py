@@ -13,9 +13,8 @@ formatting without calling the API. The few that need OpenAI are marked
 
 import re
 import pytest
-import rag
-import api
-
+from berlin_rag import rag
+from berlin_rag import api
 
 
 # ================================================================

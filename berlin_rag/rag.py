@@ -9,9 +9,9 @@ Retrieval:
     - BM25 combines the original question and a German query expansion
     - Top-K = 12, at most 2 chunks per source
 
-Usage:
-    python rag.py ask "Your question here"   # answer one question
-    python rag.py                            # run the evaluation set
+Usage (from the project root):
+    python -m berlin_rag.rag ask "Your question here"   # answer one question
+    python -m berlin_rag.rag                            # run the evaluation set
 """
 
 import json
@@ -24,7 +24,7 @@ import numpy as np
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from chunking import (
+from .chunking import (
     MAX_CHUNK,
     MIN_CHUNK,
     chunk_berlin,
@@ -32,17 +32,28 @@ from chunking import (
     merge_small,
     split_hard,
 )
-from evaluation import run_review
-from prompts import EXPANSION_PROMPT, PROMPT
+from .evaluation import run_review
+from .prompts import EXPANSION_PROMPT, PROMPT
+
+
+# ================================================================
+# PATHS
+# ================================================================
+
+PACKAGE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = PACKAGE_DIR.parent
+
+DATA_DIR = PROJECT_ROOT / "data"
+CORPUS_DIR = DATA_DIR / "corpus"
+EVAL_FILE = DATA_DIR / "eval" / "100.json"
+CACHE_DIR = DATA_DIR / "cache"
+
+ENV_FILE = PROJECT_ROOT / "API.env"
 
 
 # ================================================================
 # CONFIG
 # ================================================================
-
-BASE_DIR = Path(__file__).resolve().parent
-FOLDER = BASE_DIR / "Documents"
-ENV_FILE = BASE_DIR / "API.env"
 
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL = "gpt-5.6"
@@ -96,11 +107,11 @@ def get_client():
 # ================================================================
 
 def load_documents():
-    """Load statute .txt files and Berlin .md pages from the Documents folder."""
+    """Load statute .txt files and Berlin .md pages from the corpus folder."""
     documents = []
 
     for directory_name in LEGAL_DIRECTORIES:
-        directory = FOLDER / directory_name
+        directory = CORPUS_DIR / directory_name
         if not directory.exists():
             print(f"WARNING: directory not found: {directory}")
             continue
@@ -109,7 +120,7 @@ def load_documents():
                 {"name": path.name, "text": path.read_text(encoding="utf-8")}
             )
 
-    for path in sorted(FOLDER.glob("*.md")):
+    for path in sorted(CORPUS_DIR.glob("*.md")):
         documents.append(
             {"name": path.name, "text": path.read_text(encoding="utf-8")}
         )
@@ -228,8 +239,8 @@ def embed_query(text):
 
 
 def cached_vectors(chunks):
-    """Load chunk embeddings from cache, or create and save them."""
-    path = FOLDER / f"vectors_{len(chunks)}.npy"
+    """Load chunk embeddings from the cache folder, or create and save them."""
+    path = CACHE_DIR / f"vectors_{len(chunks)}.npy"
 
     if path.exists():
         vectors = np.load(path)
@@ -240,6 +251,8 @@ def cached_vectors(chunks):
 
     print(f"Creating embeddings for {len(chunks)} chunks...")
     vectors = embed_batch([chunk["text"] for chunk in chunks])
+
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
     np.save(path, vectors)
     return vectors
 
@@ -420,7 +433,7 @@ def main(args):
         question = " ".join(args[1:])
         if not question:
             print("Usage:")
-            print('python rag.py ask "Your question here"')
+            print('python -m berlin_rag.rag ask "Your question here"')
             sys.exit(1)
 
         system = System(verbose=False)
@@ -432,11 +445,10 @@ def main(args):
         print(answer.strip())
         return
 
-    json_path = FOLDER / "100.json"
-    if not json_path.exists():
-        raise FileNotFoundError(f"Could not find: {json_path}")
+    if not EVAL_FILE.exists():
+        raise FileNotFoundError(f"Could not find: {EVAL_FILE}")
 
-    data = json.loads(json_path.read_text(encoding="utf-8"))
+    data = json.loads(EVAL_FILE.read_text(encoding="utf-8"))
     system = System(verbose=False)
     run_review(system, data)
 
