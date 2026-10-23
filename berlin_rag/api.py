@@ -13,8 +13,8 @@ Endpoints:
     GET  /health   Service status, corpus size, and uptime.
     GET  /docs     Interactive OpenAPI documentation.
 
-Usage:
-    uvicorn api:app --host 0.0.0.0 --port 8000
+Usage (from the project root):
+    uvicorn berlin_rag.api:app --host 0.0.0.0 --port 8000
 """
 
 import time
@@ -24,8 +24,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-from citations import cited_files, readable, strip_citations
-from rag import K, System
+from .citations import cited_files, readable, strip_citations
+from .rag import K, System
 
 # ================================================================
 # CONFIGURATION
