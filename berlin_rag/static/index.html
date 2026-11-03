@@ -3,202 +3,501 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Berlin Bureaucracy RAG</title>
+<meta name="description" content="Answers to questions about address registration, residence permits, student work and health insurance in Berlin, with the laws and official pages they are based on.">
+<title>Berlin Bureaucracy · Answers for international students</title>
 <style>
 :root{
-  --bg:#f6f8fb;--panel:#fff;--ink:#12213a;--body:#445169;--muted:#7b8798;
-  --line:#e1e7ef;--accent:#1f63d7;--accent-dark:#174fae;--good:#1d7a50;
-  --good-soft:#edf8f2;--danger:#a13c3c;--danger-soft:#fff2f2;
-  --shadow:0 18px 45px rgba(26,45,77,.10)
+  --bg:#f6f5f1;--surface:#ffffff;--surface-2:#f0eee8;
+  --ink:#1a1d21;--body:#3d434b;--muted:#6b717a;--faint:#9097a0;
+  --line:#e2dfd7;--line-strong:#cfcbc0;
+  --accent:#1f4e79;--accent-ink:#ffffff;--accent-soft:#e7eef5;
+  --ok:#2f6b46;--ok-soft:#e8f2eb;
+  --note:#8a5a00;--note-soft:#fbf3e2;
+  --err:#9b2c2c;--err-soft:#fbeaea;
+  --focus:0 0 0 3px rgba(31,78,121,.28);
+  --radius:10px;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#16181b;--surface:#1e2125;--surface-2:#262a2f;
+    --ink:#f1efe9;--body:#d0ccc3;--muted:#a19d95;--faint:#7c7871;
+    --line:#2f3338;--line-strong:#3e434a;
+    --accent:#8db8e0;--accent-ink:#0f1a26;--accent-soft:#1f2c3a;
+    --ok:#8fcaa2;--ok-soft:#1d2b22;
+    --note:#e6c07a;--note-soft:#2d2619;
+    --err:#f0a3a3;--err-soft:#341f1f;
+    --focus:0 0 0 3px rgba(141,184,224,.35);
+    color-scheme:dark;
+  }
 }
 *{box-sizing:border-box}
-body{
-  margin:0;min-height:100vh;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
-  color:var(--body);
-  background:radial-gradient(circle at 8% 0%,#eaf2ff 0,transparent 30%),
-             radial-gradient(circle at 92% 8%,#eef9ff 0,transparent 28%),var(--bg);
-  -webkit-font-smoothing:antialiased
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--body);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:2px}
+button,textarea{font:inherit;color:inherit}
+:focus-visible{outline:none;box-shadow:var(--focus)}
+.wrap{width:min(1040px,100% - 40px);margin:0 auto}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Header */
+.site-header{border-bottom:1px solid var(--line);background:var(--surface)}
+.site-header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
+.brand{display:flex;align-items:center;gap:12px;color:var(--ink);text-decoration:none}
+.brand-mark{width:32px;height:32px;border-radius:7px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:700 17px/1 var(--serif)}
+.brand-name{font-weight:650;letter-spacing:-.01em}
+.brand-sub{display:block;color:var(--muted);font-size:12.5px;font-weight:400;line-height:1.2}
+.header-nav{display:flex;align-items:center;gap:20px;font-size:14px}
+.header-nav a{color:var(--body);text-decoration:none}
+.header-nav a:hover{color:var(--ink);text-decoration:underline}
+.status{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;white-space:nowrap}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.status[data-state="online"] .status-dot{background:var(--ok)}
+.status[data-state="offline"] .status-dot{background:var(--err)}
+
+/* Intro */
+.intro{padding:56px 0 28px;max-width:720px}
+.eyebrow{margin:0 0 12px;color:var(--accent);font-size:13px;font-weight:650;letter-spacing:.06em;text-transform:uppercase}
+h1{margin:0;color:var(--ink);font:500 clamp(28px,4vw,40px)/1.18 var(--serif);letter-spacing:-.01em;overflow-wrap:break-word}
+.lead{margin:16px 0 0;color:var(--muted);font-size:17px;max-width:640px}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;align-items:start;padding-bottom:64px}
+
+/* Ask form */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+.ask{padding:20px}
+.ask label{display:block;margin-bottom:8px;color:var(--ink);font-weight:600;font-size:15px}
+textarea{display:block;width:100%;min-height:96px;max-height:260px;resize:vertical;padding:12px 14px;border:1px solid var(--line-strong);border-radius:8px;background:var(--bg);color:var(--ink);line-height:1.5}
+textarea::placeholder{color:var(--faint)}
+textarea:focus{border-color:var(--accent);box-shadow:var(--focus);outline:none}
+.ask-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;flex-wrap:wrap}
+.hint{color:var(--muted);font-size:13px}
+.hint kbd{font:inherit;font-size:12px;padding:1px 5px;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:4px;background:var(--surface-2)}
+.counter{color:var(--faint);font-variant-numeric:tabular-nums;margin-left:10px}
+.counter.near{color:var(--note)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 20px;border:1px solid transparent;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:15px;cursor:pointer}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn:disabled{opacity:.6;cursor:default}
+.btn-quiet{height:34px;padding:0 12px;background:transparent;border-color:var(--line-strong);color:var(--body);font-size:13.5px;font-weight:500}
+.btn-quiet:hover:not(:disabled){background:var(--surface-2);filter:none}
+.spinner{width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Topics */
+.topics{margin-top:28px}
+.section-title{margin:0 0 12px;color:var(--ink);font-size:15px;font-weight:650}
+.topic-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.topic-tab{padding:7px 13px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);color:var(--body);font-size:14px;cursor:pointer}
+.topic-tab:hover{border-color:var(--accent);color:var(--ink)}
+.topic-tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.examples{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+.examples li+li{border-top:1px solid var(--line)}
+.example{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;padding:13px 16px;border:0;background:none;text-align:left;cursor:pointer;color:var(--ink);font-size:15px}
+.example:hover{background:var(--surface-2)}
+.example::after{content:"→";color:var(--faint);transition:transform .15s}
+.example:hover::after{transform:translateX(3px);color:var(--accent)}
+
+/* Result */
+#result:empty{display:none}
+#result{margin-top:24px}
+.result{padding:24px}
+.result-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.result-question{margin:0;color:var(--ink);font:500 20px/1.35 var(--serif)}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.tag-ok{background:var(--ok-soft);color:var(--ok)}
+.tag-note{background:var(--note-soft);color:var(--note)}
+.answer{padding:18px 0 4px;color:var(--body);font-size:16px;line-height:1.7}
+.answer p{margin:0 0 14px}
+.answer ul,.answer ol{margin:0 0 14px;padding-left:22px}
+.answer li{margin-bottom:6px}
+.answer b{color:var(--ink);font-weight:650}
+.not-covered{padding:16px 18px;margin-top:18px;border-left:3px solid var(--note);background:var(--note-soft);border-radius:0 8px 8px 0}
+.not-covered p{margin:0 0 6px}.not-covered p:last-child{margin:0}
+.sources{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.sources h3{margin:0 0 10px;color:var(--ink);font-size:14px;font-weight:650}
+.source-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.source{display:flex;align-items:baseline;gap:10px;font-size:14.5px}
+.source-kind{flex:none;min-width:94px;color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.source-label{color:var(--ink)}
+.result-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:20px;padding-top:14px;border-top:1px solid var(--line);color:var(--faint);font-size:13px}
+.actions{display:flex;gap:8px}
+.skeleton{padding:24px}
+.skeleton-line{height:12px;margin:12px 0;border-radius:6px;background:linear-gradient(90deg,var(--surface-2),var(--line),var(--surface-2));background-size:200% 100%;animation:shimmer 1.3s ease-in-out infinite}
+@keyframes shimmer{from{background-position:100% 0}to{background-position:-100% 0}}
+.skeleton-status{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}
+.alert{padding:14px 16px;border-radius:8px;border:1px solid;font-size:15px}
+.alert-err{background:var(--err-soft);border-color:transparent;color:var(--err)}
+.alert-note{background:var(--note-soft);border-color:transparent;color:var(--note)}
+
+/* Sidebar */
+.aside{display:grid;gap:16px}
+.aside .panel{padding:18px 20px}
+.aside h2{margin:0 0 10px;color:var(--ink);font-size:15px;font-weight:650}
+.aside p,.aside li{font-size:14px;color:var(--body)}
+.aside p{margin:0}
+.steps{margin:0;padding:0;list-style:none;counter-reset:step;display:grid;gap:12px}
+.steps li{position:relative;padding-left:30px}
+.steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:700}
+.coverage{margin:0;padding-left:18px;display:grid;gap:4px}
+.disclaimer{border-color:var(--note-soft);background:var(--note-soft)}
+.disclaimer h2{color:var(--note)}
+
+/* Footer */
+.site-footer{border-top:1px solid var(--line);padding:24px 0 40px;color:var(--muted);font-size:13px}
+.site-footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.site-footer p{margin:0;max-width:640px}
+
+@media (max-width:860px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .intro{padding-top:36px}
 }
-.shell{width:min(980px,calc(100% - 32px));margin:0 auto;padding:28px 0 58px}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:48px}
-.brand{display:flex;align-items:center;gap:12px}
-.brand-mark{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;color:#fff;background:linear-gradient(135deg,#1f63d7,#3c8cff);box-shadow:0 9px 24px rgba(31,99,215,.25);font-weight:800}
-.brand-title{color:var(--ink);font-size:14px;font-weight:800}
-.brand-subtitle{margin-top:3px;color:var(--muted);font-size:11.5px}
-.github-link{padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.76);color:var(--body);text-decoration:none;font-size:13px;font-weight:700;transition:.18s ease}
-.github-link:hover{transform:translateY(-1px);background:#fff;color:var(--ink)}
-.hero{max-width:790px;margin:0 auto;text-align:center}
-.badge{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;margin-bottom:17px;border-radius:999px;background:var(--good-soft);color:var(--good);font-size:12px;font-weight:800}
-.badge-dot{width:7px;height:7px;border-radius:50%;background:var(--good)}
-h1{margin:0;color:var(--ink);font-size:clamp(34px,6vw,54px);line-height:1.04;letter-spacing:-.038em;font-weight:850}
-.hero p{max-width:700px;margin:17px auto 0;color:var(--muted);font-size:16px;line-height:1.7}
-.search-card{max-width:840px;margin:30px auto 0;padding:18px;border:1px solid rgba(214,223,235,.95);border-radius:20px;background:rgba(255,255,255,.91);box-shadow:var(--shadow);backdrop-filter:blur(12px)}
-form{display:flex;gap:10px}
-input{min-width:0;flex:1;height:56px;padding:0 17px;border:1px solid #d6dee9;border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:15.5px;transition:border-color .15s,box-shadow .15s}
-input::placeholder{color:#a4aebb}
-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px rgba(31,99,215,.10)}
-#btn{height:56px;padding:0 25px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--accent),#347ce8);color:#fff;font:inherit;font-size:14.5px;font-weight:800;cursor:pointer;box-shadow:0 8px 18px rgba(31,99,215,.20);transition:.18s ease}
-#btn:hover:not(:disabled){transform:translateY(-1px);background:linear-gradient(135deg,var(--accent-dark),var(--accent))}
-#btn:disabled{opacity:.55;cursor:default;box-shadow:none}
-.examples-label{margin:16px 2px 9px;color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
-.examples{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.example-btn{appearance:none;min-height:54px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--body);text-align:left;font:inherit;font-size:12.5px;line-height:1.4;cursor:pointer;transition:.16s ease}
-.example-btn:hover{border-color:#b8cae6;background:#f8fbff;color:var(--accent-dark)}
-.meta{max-width:840px;margin:14px auto 0;display:flex;justify-content:center;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:12px}
-.meta strong{color:var(--body)}
-#out{max-width:840px;margin:27px auto 0}
-#out:empty{display:none}
-.card{padding:26px;border:1px solid var(--line);border-radius:18px;background:var(--panel);box-shadow:var(--shadow)}
-.card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
-.card-title{color:var(--ink);font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.08em}
-.status-pill{padding:6px 9px;border-radius:999px;background:var(--good-soft);color:var(--good);font-size:11px;font-weight:800}
-.status-pill.refusal{background:#f1f3f6;color:#6e7683}
-.answer{color:var(--body);font-size:15.5px;line-height:1.75}
-.answer p{margin:0 0 14px}.answer p:last-child{margin-bottom:0}
-.answer b,.answer strong{color:var(--ink);font-weight:750}
-.answer ul{margin:0 0 14px;padding-left:21px}.answer li{margin-bottom:7px}
-.refused{color:#6d7581;font-style:italic}
-.sources{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
-.sources-label{display:block;margin-bottom:10px;color:var(--muted);font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.08em}
-.source-grid{display:flex;flex-wrap:wrap;gap:8px}
-.source-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #d9e3ef;border-radius:9px;background:#f8fbff;color:#35516f;font-size:12px;font-weight:700}
-.source-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
-.timing{margin-top:10px;text-align:right;color:#9ca6b5;font-size:11.5px}
-.thinking{padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.84);color:var(--muted);font-size:14px;box-shadow:0 10px 28px rgba(26,45,77,.06)}
-.thinking::after{content:'';display:inline-block;width:1.2em;animation:dots 1.15s steps(4,end) infinite}
-@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
-.error{padding:16px 18px;border:1px solid #f0cccc;border-radius:12px;background:var(--danger-soft);color:var(--danger);font-size:14px}
-.footer{max-width:840px;margin:30px auto 0;padding-top:18px;border-top:1px solid rgba(214,222,232,.85);color:var(--muted);text-align:center;font-size:11.5px;line-height:1.6}
-@media(max-width:720px){.shell{width:min(100% - 22px,980px);padding-top:18px}.topbar{margin-bottom:34px}.brand-subtitle{display:none}form{flex-direction:column}#btn{width:100%}.examples{grid-template-columns:1fr}.card{padding:20px}}
+@media (max-width:560px){
+  .wrap{width:min(1040px,100% - 28px)}
+  .header-nav .nav-link{display:none}
+  .brand-sub{display:none}
+  .ask{padding:16px}
+  .result{padding:18px}
+  .source{flex-direction:column;gap:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div class="shell">
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark">B</div>
-      <div>
-        <div class="brand-title">Berlin Bureaucracy RAG</div>
-        <div class="brand-subtitle">Source-grounded answers for international students</div>
-      </div>
-    </div>
-    <a class="github-link" href="https://github.com/HassanHijaze/berlin-bureaucracy-rag" target="_blank" rel="noopener">GitHub</a>
-  </header>
 
-  <main>
-    <section class="hero">
-      <div class="badge"><span class="badge-dot"></span>Grounded in official sources</div>
-      <h1>Berlin bureaucracy,<br>made easier to navigate.</h1>
-      <p>
-        Ask questions about address registration, student residence permits,
-        student working rights and health insurance. Answers are generated only
-        from the project's curated legal and administrative corpus.
-      </p>
-    </section>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">B</span>
+      <span class="brand-name">Berlin Bureaucracy
+        <span class="brand-sub">Answers for international students</span>
+      </span>
+    </a>
+    <nav class="header-nav" aria-label="Main">
+      <a class="nav-link" href="#how-it-works">How it works</a>
+      <a class="nav-link" href="/docs">API</a>
+      <a class="nav-link" href="https://github.com/HassanHijaze/berlin-bureaucracy-rag" rel="noopener">GitHub</a>
+      <span class="status" id="status" data-state="checking" role="status">
+        <span class="status-dot" aria-hidden="true"></span><span id="status-text">Checking…</span>
+      </span>
+    </nav>
+  </div>
+</header>
 
-    <section class="search-card">
-      <form onsubmit="go(event)">
-        <input id="q" maxlength="500" placeholder="Ask a question about living or studying in Berlin..." autofocus>
-        <button id="btn" type="submit">Ask</button>
+<main class="wrap">
+  <section class="intro">
+    <p class="eyebrow">Studying in Berlin</p>
+    <h1>Answers to your Berlin paperwork questions, with the rules behind them.</h1>
+    <p class="lead">
+      Ask about registering your address, your residence permit, working while you study,
+      or health insurance. Every answer is based on German law and official Berlin pages,
+      and lists the sources it used.
+    </p>
+  </section>
+
+  <div class="layout">
+    <div>
+      <form class="panel ask" id="ask-form" novalidate>
+        <label for="question">Your question</label>
+        <textarea id="question" name="question" maxlength="500" rows="3"
+          placeholder="For example: I moved to a new flat last week. When do I have to register?"
+          aria-describedby="question-hint"></textarea>
+        <div class="ask-row">
+          <span class="hint" id="question-hint">English or German · <kbd>Enter</kbd> to send, <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line<span class="counter" id="counter">0 / 500</span></span>
+          <button class="btn" id="submit" type="submit">Get answer</button>
+        </div>
       </form>
 
-      <div class="examples-label">Try an example</div>
-      <div class="examples">
-        <button class="example-btn" type="button" onclick="fill(this)">What happens if I register late?</button>
-        <button class="example-btn" type="button" onclick="fill(this)">How many days can I work as a student?</button>
-        <button class="example-btn" type="button" onclick="fill(this)">My permit expires before my appointment</button>
-      </div>
-    </section>
+      <div id="result" aria-live="polite"></div>
 
-    <div class="meta">
-      <span><strong>Retrieval:</strong> Semantic + BM25</span>
-      <span><strong>Top-K:</strong> 12</span>
-      <span><strong>Scope:</strong> Berlin / international students</span>
+      <section class="topics" aria-labelledby="topics-title">
+        <h2 class="section-title" id="topics-title">Common questions</h2>
+        <div class="topic-tabs" role="tablist" id="topic-tabs"></div>
+        <ul class="examples" id="examples" role="tabpanel"></ul>
+      </section>
     </div>
 
-    <div id="out"></div>
+    <aside class="aside">
+      <section class="panel" id="how-it-works">
+        <h2>How it works</h2>
+        <ol class="steps">
+          <li>Your question is matched against German laws and official Berlin pages.</li>
+          <li>The answer is written only from the passages that were found, and names them.</li>
+          <li>If the sources don't cover your question, it says so instead of guessing.</li>
+        </ol>
+      </section>
+      <section class="panel">
+        <h2>What it covers</h2>
+        <ul class="coverage">
+          <li>Address registration (Anmeldung)</li>
+          <li>Student residence permits</li>
+          <li>Working while studying</li>
+          <li>Health insurance for students</li>
+        </ul>
+      </section>
+      <section class="panel disclaimer">
+        <h2>Not legal advice</h2>
+        <p>Rules and fees change. Before an important decision, check the linked law or ask the responsible office, such as the Bürgeramt or the Landesamt für Einwanderung.</p>
+      </section>
+    </aside>
+  </div>
+</main>
 
-    <footer class="footer">
-      Not legal advice. The system declines questions that are not supported by its sources.
-      Verify important decisions against the cited law or official administrative guidance.
-    </footer>
-  </main>
-</div>
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Sources: Bundesmeldegesetz, Aufenthaltsgesetz, Aufenthaltsverordnung, SGB V, LEA procedural notes, and pages from Berlin's ServicePortal, the LEA, the Federal Foreign Office and statutory health insurers.</p>
+    <p>Independent student project. Not affiliated with the State of Berlin.</p>
+  </div>
+</footer>
 
 <script>
-const out = document.getElementById('out');
-const btn = document.getElementById('btn');
-const box = document.getElementById('q');
+const TOPICS = [
+  {name: "Registration", questions: [
+    "How long do I have to register my address after moving?",
+    "What happens if I register late?",
+    "Which documents do I need for the Anmeldung?",
+  ]},
+  {name: "Residence permit", questions: [
+    "My permit expires before my appointment. What should I do?",
+    "Can I enter Germany on a national visa and apply in Berlin?",
+    "When does a residence permit for studies expire?",
+  ]},
+  {name: "Working", questions: [
+    "How many days can I work per year as a student?",
+    "Do student assistant jobs count towards the work limit?",
+  ]},
+  {name: "Health insurance", questions: [
+    "Do I need German health insurance as a student?",
+    "Can I use private insurance instead of public insurance?",
+  ]},
+];
 
-function fill(el){box.value=el.textContent.trim();go();}
+const STATUTE_PATHS = {bmg: "bmg", aufenthg: "aufenthg_2004", aufenthv: "aufenthv", sgb: "sgb_5"};
+const MAX_CHARS = 500;
 
-async function go(event){
-  if(event){event.preventDefault();}
-  const q=box.value.trim();
-  if(!q){return;}
+const form = document.getElementById("ask-form");
+const input = document.getElementById("question");
+const submit = document.getElementById("submit");
+const counter = document.getElementById("counter");
+const result = document.getElementById("result");
 
-  btn.disabled=true;
-  btn.textContent='Searching...';
-  out.innerHTML='<div class="thinking">Searching the legal and administrative sources</div>';
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 
-  try{
-    const r=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
+function bold(text) {
+  return text.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/__(.+?)__/g, "<b>$1</b>");
+}
 
-    if(!r.ok){
-      const err=await r.json().catch(()=>({}));
-      out.innerHTML='<div class="error">'+esc(err.detail||('Request failed ('+r.status+')'))+'</div>';
-      btn.disabled=false;
-      btn.textContent='Ask';
-      return;
+function formatAnswer(text) {
+  return escapeHtml(text).split(/\n\s*\n/).map(block => {
+    const lines = block.split("\n").map(line => line.trim()).filter(Boolean);
+    if (lines.length && lines.every(line => /^[-*•]\s+/.test(line))) {
+      return "<ul>" + lines.map(line => "<li>" + bold(line.replace(/^[-*•]\s+/, "")) + "</li>").join("") + "</ul>";
     }
-
-    const d=await r.json();
-    let html='<div class="card">';
-
-    html+='<div class="card-header">'+
-      '<div class="card-title">Answer</div>'+
-      '<div class="status-pill'+(d.refused?' refusal':'')+'">'+
-      (d.refused?'Not covered':'Source-grounded')+'</div></div>';
-
-    html+='<div class="answer'+(d.refused?' refused':'')+'">'+format(d.answer)+'</div>';
-
-    if(d.sources.length){
-      html+='<div class="sources"><span class="sources-label">Sources used</span><div class="source-grid">'+
-        d.sources.map(s=>'<div class="source-chip"><span class="source-dot"></span>'+esc(s.label)+'</div>').join('')+
-        '</div></div>';
+    if (lines.length && lines.every(line => /^\d+[.)]\s+/.test(line))) {
+      return "<ol>" + lines.map(line => "<li>" + bold(line.replace(/^\d+[.)]\s+/, "")) + "</li>").join("") + "</ol>";
     }
+    return lines.length ? "<p>" + bold(lines.join(" ")) + "</p>" : "";
+  }).join("");
+}
 
-    html+='</div>';
-    html+='<div class="timing">Answered in '+d.elapsed_seconds+' seconds</div>';
-    out.innerHTML=html;
-  }catch(e){
-    out.innerHTML='<div class="error">Could not reach the service.</div>';
+function describeSource(source) {
+  const parts = source.file.replace(/\.(txt|md)$/, "").split("_");
+  if (source.file.endsWith(".md")) {
+    return {kind: "Official page", url: null};
   }
-
-  btn.disabled=false;
-  btn.textContent='Ask';
+  if (parts[0] === "vab") {
+    return {kind: "LEA guidance", url: null};
+  }
+  const path = STATUTE_PATHS[parts[0]];
+  const section = parts[2];
+  const url = path && section ? `https://www.gesetze-im-internet.de/${path}/__${section}.html` : null;
+  return {kind: "Law", url};
 }
 
-function esc(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function renderSources(sources) {
+  if (!sources.length) {
+    return "";
+  }
+  const items = sources.map(source => {
+    const {kind, url} = describeSource(source);
+    const label = escapeHtml(source.label);
+    const link = url ? `<a href="${url}" rel="noopener" target="_blank">${label}</a>` : `<span class="source-label">${label}</span>`;
+    return `<li class="source"><span class="source-kind">${kind}</span>${link}</li>`;
+  }).join("");
+  return `<div class="sources"><h3>Sources (${sources.length})</h3><ul class="source-list">${items}</ul></div>`;
 }
 
-function format(text){
-  const blocks=esc(text).split(/\n\s*\n/);
-  return blocks.map(block=>{
-    const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);
-    const bulleted=lines.length&&lines.every(l=>/^[-*•]\s+|^\d+\.\s+/.test(l));
-    if(bulleted){
-      return '<ul>'+lines.map(l=>'<li>'+bold(l.replace(/^[-*•]\s+|^\d+\.\s+/,''))+'</li>').join('')+'</ul>';
+function renderAnswer(question, data) {
+  const tag = data.refused
+    ? '<span class="tag tag-note">Not covered by the sources</span>'
+    : `<span class="tag tag-ok">Based on ${data.sources.length} source${data.sources.length === 1 ? "" : "s"}</span>`;
+
+  const body = data.refused
+    ? `<div class="not-covered">
+         <p><b>The sources available to this tool don't answer this question.</b></p>
+         <p>It covers address registration, student residence permits, working while studying and health insurance.
+         For anything else, please contact the responsible office directly.</p>
+       </div>`
+    : `<div class="answer">${formatAnswer(data.answer)}</div>${renderSources(data.sources)}`;
+
+  result.innerHTML = `
+    <article class="panel result">
+      <div class="result-head">
+        <h2 class="result-question">${escapeHtml(question)}</h2>
+        ${tag}
+      </div>
+      ${body}
+      <div class="result-foot">
+        <span>Answered in ${Number(data.elapsed_seconds).toFixed(1)} s · Not legal advice</span>
+        <span class="actions">
+          ${data.refused ? "" : '<button class="btn btn-quiet" type="button" id="copy">Copy answer</button>'}
+          <button class="btn btn-quiet" type="button" id="again">Ask another question</button>
+        </span>
+      </div>
+    </article>`;
+
+  const copy = document.getElementById("copy");
+  if (copy) {
+    copy.addEventListener("click", async () => {
+      const sourceLines = data.sources.map(source => "- " + source.label).join("\n");
+      try {
+        await navigator.clipboard.writeText(data.answer + (sourceLines ? "\n\nSources:\n" + sourceLines : ""));
+        copy.textContent = "Copied";
+      } catch {
+        copy.textContent = "Copy failed";
+      }
+      setTimeout(() => { copy.textContent = "Copy answer"; }, 1800);
+    });
+  }
+  document.getElementById("again").addEventListener("click", () => {
+    input.value = "";
+    updateCounter();
+    input.focus();
+    window.scrollTo({top: 0, behavior: "smooth"});
+  });
+}
+
+function renderLoading() {
+  result.innerHTML = `
+    <div class="panel skeleton" aria-busy="true">
+      <div class="skeleton-status"><span class="spinner" aria-hidden="true"></span>Searching laws and official pages…</div>
+      <div class="skeleton-line" style="width:92%"></div>
+      <div class="skeleton-line" style="width:85%"></div>
+      <div class="skeleton-line" style="width:60%"></div>
+    </div>`;
+}
+
+function renderError(status, detail) {
+  let message = "Something went wrong. Please try again in a moment.";
+  let style = "alert-err";
+  if (status === 429) {
+    message = "The daily question limit for this demo has been reached. Please try again tomorrow.";
+    style = "alert-note";
+  } else if (status === 502) {
+    message = "The language model did not respond. Please try again in a moment.";
+  } else if (status === 0) {
+    message = "Could not reach the service. Check your connection and try again.";
+  } else if (detail) {
+    message = detail;
+  }
+  result.innerHTML = `<div class="alert ${style}" role="alert">${escapeHtml(message)}</div>`;
+}
+
+function setBusy(busy) {
+  submit.disabled = busy;
+  input.readOnly = busy;
+  submit.innerHTML = busy ? '<span class="spinner" aria-hidden="true"></span>Answering…' : "Get answer";
+}
+
+async function ask(question) {
+  setBusy(true);
+  renderLoading();
+  try {
+    const response = await fetch("/ask", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({question}),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      renderError(response.status, typeof error.detail === "string" ? error.detail : null);
+    } else {
+      renderAnswer(question, await response.json());
     }
-    return '<p>'+bold(lines.join(' '))+'</p>';
-  }).join('');
+  } catch {
+    renderError(0);
+  }
+  setBusy(false);
+  result.scrollIntoView({behavior: "smooth", block: "nearest"});
 }
 
-function bold(s){
-  return s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/__(.+?)__/g,'<b>$1</b>');
+function updateCounter() {
+  counter.textContent = `${input.value.length} / ${MAX_CHARS}`;
+  counter.classList.toggle("near", input.value.length > MAX_CHARS - 50);
 }
+
+function showTopic(index) {
+  document.querySelectorAll(".topic-tab").forEach((tab, i) => tab.setAttribute("aria-selected", String(i === index)));
+  const list = document.getElementById("examples");
+  list.innerHTML = TOPICS[index].questions
+    .map(question => `<li><button class="example" type="button">${escapeHtml(question)}</button></li>`)
+    .join("");
+  list.querySelectorAll(".example").forEach(button => {
+    button.addEventListener("click", () => {
+      input.value = button.textContent;
+      updateCounter();
+      ask(input.value);
+    });
+  });
+}
+
+async function checkStatus() {
+  const status = document.getElementById("status");
+  const text = document.getElementById("status-text");
+  try {
+    const response = await fetch("/health");
+    const health = await response.json();
+    status.dataset.state = "online";
+    text.textContent = `Online · ${health.documents} sources`;
+  } catch {
+    status.dataset.state = "offline";
+    text.textContent = "Offline";
+  }
+}
+
+form.addEventListener("submit", event => {
+  event.preventDefault();
+  const question = input.value.trim();
+  if (question && !submit.disabled) {
+    ask(question);
+  } else if (!question) {
+    input.focus();
+  }
+});
+
+input.addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+    event.preventDefault();
+    form.requestSubmit();
+  }
+});
+input.addEventListener("input", updateCounter);
+
+document.getElementById("topic-tabs").innerHTML = TOPICS
+  .map((topic, i) => `<button class="topic-tab" type="button" role="tab" aria-selected="false" data-index="${i}">${topic.name}</button>`)
+  .join("");
+document.querySelectorAll(".topic-tab").forEach(tab => {
+  tab.addEventListener("click", () => showTopic(Number(tab.dataset.index)));
+});
+
+showTopic(0);
+checkStatus();
 </script>
 </body>
 </html>

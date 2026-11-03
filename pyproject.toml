@@ -1,0 +1,27 @@
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # import sorting
+    "UP",   # modern Python syntax
+    "B",    # likely bugs
+    "BLE",  # blind except
+    "ANN",  # type hints on every function
+    "D",    # docstrings on every module, class, and public function
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests follow the bootcamp style: no docstrings, no type hints.
+"tests/**" = ["ANN", "D"]
