@@ -12,7 +12,7 @@ Berlin sources, cite the sources they used, and decline when the sources don't c
 
 ![Demo](docs/demo.gif)
 
-**Live demo:** _link coming soon_ · Not legal advice.
+**Live demo:** [berlin-bureaucracy-rag-1.onrender.com](https://berlin-bureaucracy-rag-1.onrender.com/) · Not legal advice.
 
 ## Key features
 
@@ -132,7 +132,7 @@ in `data/cache/`, and commit the new `.npy` file.
 - The corpus is limited and does not cover every administrative question about living in Germany. Topics outside it are intentionally refused.
 - Answers reflect the sources as of when they were downloaded, so dated figures such as the blocked-account amount can go out of date; annual amounts and thresholds need regular corpus updates.
 - Retrieval can miss a relevant section that is in the corpus, for example § 8 SGB V for the question on private health insurance.
-- Answers can differ between English and German phrasings of the same question.
+
 
 ## Data & licence
 
