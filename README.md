@@ -46,15 +46,13 @@ flowchart LR
     K --> L["LLM (gpt-5.6)"]
     L --> A["Answer with citations<br/>or refusal"]
 ```
-
-**Cost:** each question uses about 2,800 input and 320 output tokens across one embedding and two model calls, roughly 2 cents per question (measured on 10 questions, November 2026).
-
 The corpus of 68 documents (statute sections and official pages) is split into 614 chunks: statutes
 at their paragraph markers, Berlin pages at their section headings. Each question is searched two
 ways, by meaning (embeddings) and by keywords (BM25 on the question plus its German expansion), and
 the normalised scores are combined. The 12 best chunks, at most 2 per source, go to the model, which
 must answer only from them and cite each source, or reply that the sources do not cover the question.
 
+**Cost:** each question uses about 2,800 input and 320 output tokens across one embedding and two model calls, roughly 2 cents per question (measured on 10 questions, November 2026).
 ## Project structure
 
 ```text
