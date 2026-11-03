@@ -12,7 +12,10 @@ Berlin sources, cite the sources they used, and decline when the sources don't c
 
 ![Demo](docs/demo.gif)
 
-**Live demo:** _link coming soon_ · Not legal advice.
+![Demo](docs/demo.gif)
+
+**Live demo:** [berlin-bureaucracy-rag-1.onrender.com](https://berlin-bureaucracy-rag-1.onrender.com/) · Not legal advice.
+
 
 ## Key features
 
