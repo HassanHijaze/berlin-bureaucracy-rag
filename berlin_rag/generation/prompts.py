@@ -1,19 +1,28 @@
-"""Prompt templates for query expansion and answer generation."""
+"""The answer prompt and the refusal sentence it asks the model to use."""
 
-EXPANSION_PROMPT = (
-    "Map the following user question to German administrative and legal "
-    "search keywords.\n\n"
-    "Include relevant German legal terms, statutory sections, and "
-    "administrative terminology when appropriate.\n\n"
-    "Examples:\n"
-    "- cost/fee -> Gebühren kostenfrei\n"
-    "- lost paper/proof -> Meldebescheinigung Meldebestätigung\n"
-    "- fine/penalty -> Ordnungswidrigkeit Bußgeld § 54\n"
-    "- hotel/hostel -> Beherbergungsstätte § 29\n"
-    "- move/change address -> Anmeldung Ummeldung § 17 § 21\n\n"
-    "Question: {question}\n\n"
-    "Output ONLY space-separated German keywords."
-)
+REFUSAL_TEXT = "The sources I have do not cover this."
+"""The exact sentence PROMPT tells the model to output when it must decline."""
+
+
+QUOTE_CHARACTERS = "\"'"
+
+
+def is_refusal(answer: str) -> bool:
+    """Check whether an answer is the refusal sentence, not just a mention of it.
+
+    Matching only the start of the answer keeps real answers such as
+    "private plans do not cover dental care" from counting as refusals.
+
+    Args:
+        answer: The generated answer, possibly with surrounding quotes or spaces.
+
+    Returns:
+        True if the answer starts with ``REFUSAL_TEXT``, ignoring case.
+    """
+    normalized_answer = answer.strip().strip(QUOTE_CHARACTERS).lower()
+    refusal_start = REFUSAL_TEXT.lower().rstrip(".")
+    return normalized_answer.startswith(refusal_start)
+
 
 PROMPT = """
 YOU MUST WRITE YOUR ANSWER IN THE QUESTIONS LANGUAGE.

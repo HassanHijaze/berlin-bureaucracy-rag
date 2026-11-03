@@ -34,7 +34,6 @@ PAGE_NAMES: dict[str, str] = {
     "visum_studium.md": "Auswärtiges Amt — Visum zum Studium",
     "gkv_versicherte.md": "Bundesgesundheitsministerium — GKV",
     "tk_studenten_ausland.md": "TK — Studierende aus dem Ausland",
-    "krankenkasse_studium.md": "TK — Krankenversicherung für Studierende",
 }
 """Display names for administrative pages, keyed by filename."""
 

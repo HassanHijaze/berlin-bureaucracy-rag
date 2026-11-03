@@ -8,3 +8,5 @@ __pycache__/
 *.ipynb
 *.pdf
 review_output.json
+.ruff_cache/
+.venv/

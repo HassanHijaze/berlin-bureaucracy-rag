@@ -2,8 +2,7 @@
 
 import re
 
-MAX_CHUNK = 750
-MIN_CHUNK = 150
+from ..config import CHUNK_OVERLAP, MAX_CHUNK, MIN_CHUNK
 
 BERLIN_HEADINGS = [
     "Verfahrensablauf",
@@ -17,8 +16,19 @@ BERLIN_HEADINGS = [
 ]
 
 
-def split_hard(text, max_size=MAX_CHUNK, overlap=100):
-    """Split text into fixed-size pieces that overlap by `overlap` characters."""
+def split_hard(
+    text: str, max_size: int = MAX_CHUNK, overlap: int = CHUNK_OVERLAP
+) -> list[str]:
+    """Split text into fixed-size pieces that overlap by ``overlap`` characters.
+
+    Args:
+        text: The text to split.
+        max_size: Maximum length of each piece, in characters.
+        overlap: Number of characters shared by consecutive pieces.
+
+    Returns:
+        The pieces in order. A text no longer than ``max_size`` is returned whole.
+    """
     if len(text) <= max_size:
         return [text]
 
@@ -27,14 +37,25 @@ def split_hard(text, max_size=MAX_CHUNK, overlap=100):
     start = 0
 
     while start < len(text):
-        pieces.append(text[start:start + max_size])
+        pieces.append(text[start : start + max_size])
         start += step
 
     return pieces
 
 
-def chunk_legal(text, max_size=MAX_CHUNK):
-    """Split a statute at paragraph markers like (1), (2), keeping the header."""
+def chunk_legal(text: str, max_size: int = MAX_CHUNK) -> list[str]:
+    """Split a statute at paragraph markers like (1), (2), keeping the header.
+
+    Every piece after the first starts with the statute's first line in
+    brackets, so a chunk still says which section it belongs to.
+
+    Args:
+        text: The statute section, with its title on the first line.
+        max_size: Maximum length of each chunk, in characters.
+
+    Returns:
+        The chunks in order. Paragraphs longer than ``max_size`` are split hard.
+    """
     if len(text) <= max_size:
         return [text]
 
@@ -64,14 +85,21 @@ def chunk_legal(text, max_size=MAX_CHUNK):
     return final_pieces
 
 
-def chunk_berlin(text, max_size=MAX_CHUNK):
-    """Split a Berlin administrative page at its standard section headings."""
+def chunk_berlin(text: str, max_size: int = MAX_CHUNK) -> list[str]:
+    """Split a Berlin administrative page at its standard section headings.
+
+    Args:
+        text: The page content.
+        max_size: Maximum length of each chunk, in characters.
+
+    Returns:
+        One chunk per section, in order. Sections longer than ``max_size``
+        are split hard.
+    """
     pattern = "|".join(re.escape(heading) for heading in BERLIN_HEADINGS)
 
     parts = [
-        part.strip()
-        for part in re.split(rf"\n(?={pattern})", text)
-        if part.strip()
+        part.strip() for part in re.split(rf"\n(?={pattern})", text) if part.strip()
     ]
     if not parts:
         parts = [text]
@@ -86,8 +114,21 @@ def chunk_berlin(text, max_size=MAX_CHUNK):
     return output
 
 
-def merge_small(chunks, min_size=MIN_CHUNK):
-    """Merge tiny chunks into the previous chunk from the same source."""
+def merge_small(chunks: list[dict], min_size: int = MIN_CHUNK) -> list[dict]:
+    """Merge tiny chunks into the previous chunk from the same source.
+
+    A chunk like "Gebühren / keine" (a heading and one word) is too short to
+    be found by search on its own, so it is appended to its neighbour when
+    the result still fits.
+
+    Args:
+        chunks: Chunks with ``text``, ``source`` and ``index`` fields.
+        min_size: Chunks shorter than this are merged when possible.
+
+    Returns:
+        New chunk dicts with indices renumbered per source. The input is
+        not modified.
+    """
     output = []
 
     for chunk in chunks:
